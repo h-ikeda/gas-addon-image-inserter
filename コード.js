@@ -64,9 +64,11 @@ function insertSelectedImages(filesData) {
     // 画像の直後に改行とファイル名を挿入
     const textElement = cursor.insertText('\n' + baseName + '\n');
     
-    // 次の画像が直後に正しく並ぶよう、カーソル位置の終端をシミュレートして更新
+    // 次の画像が直後に正しく並ぶよう、カーソル位置を更新
+    // doc.setCursor() は Document を返すため、Position を別途保持する
     const nextPosition = doc.newPosition(textElement, textElement.getText().length);
-    cursor = doc.setCursor(nextPosition);
+    doc.setCursor(nextPosition);
+    cursor = nextPosition;
     
     insertCount++;
   }
