@@ -3,6 +3,20 @@ function onInstall(e) {
   onOpen(e);
 }
 
+// Workspace Add-on のホームページカード（Marketplace SDK 要件）
+function onHomepage(e) {
+  return CardService.newCardBuilder()
+    .setHeader(CardService.newCardHeader().setTitle('画像一括挿入'))
+    .addSection(
+      CardService.newCardSection().addWidget(
+        CardService.newTextParagraph().setText(
+          '「拡張機能」メニューから「画像を一括挿入」を選択してください。'
+        )
+      )
+    )
+    .build();
+}
+
 // ドキュメントが開かれたときに「拡張機能」の中にメニューを追加する
 function onOpen(e) {
   DocumentApp.getUi()
