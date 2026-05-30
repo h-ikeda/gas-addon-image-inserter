@@ -23,16 +23,30 @@ function showImagePickerDialog() {
 // HTMLダイアログからデータを受け取り、ドキュメントに挿入するメイン処理
 function insertSelectedImages(filesData) {
   const doc = DocumentApp.getActiveDocument();
-  let cursor = doc.getCursor();
-  
+  const cursor = doc.getCursor();
+
   if (!cursor) {
     throw new Error('ドキュメント内にカーソルが見つかりません。挿入したい位置をクリックしてカーソルを点滅させてから再実行してください。');
   }
+
+  // カーソルが属する本文直下の要素（段落など）を特定し、その直後から挿入していく。
+  // インラインで同一位置に挿し込むと、改行による段落分割でカーソルが陳腐化し、
+  // 複数画像の並び順が崩れるため、本文の子要素として明示的にブロック挿入する。
+  const body = doc.getBody();
+  let topLevelElement = cursor.getElement();
+  while (
+    topLevelElement.getParent() &&
+    topLevelElement.getParent().getType() !== DocumentApp.ElementType.BODY_SECTION
+  ) {
+    topLevelElement = topLevelElement.getParent();
+  }
+  let insertIndex = body.getChildIndex(topLevelElement) + 1;
 
   // Google Docsが標準でサポートする主要なMIMEタイプ
   // （BMP/TIFF/HEIC などはダイアログ側でPNGに変換済みのため、ここに到達するのは原則この3種）
   const supportedMimeTypes = [MimeType.PNG, MimeType.JPEG, MimeType.GIF];
   let insertCount = 0;
+  let lastCaptionParagraph = null;
 
   // 受け取ったファイル配列をループ処理
   for (let i = 0; i < filesData.length; i++) {
@@ -57,21 +71,19 @@ function insertSelectedImages(filesData) {
     // 元のファイル名から拡張子を除いた名前を取得
     const baseName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
 
-    // キャプションを先に挿入してからカーソル位置に画像を挿入する
-    // GAS の Position はイミュータブルなため、同じカーソルに対して2回挿入すると
-    // 後から挿入した要素が先に挿入した要素の「前」に入る性質を利用する
-    const textElement = cursor.insertText('\n' + baseName + '\n');
+    // 画像を独立した段落として挿入し、その直下にキャプション段落を挿入する
+    body.insertImage(insertIndex, blob);
+    insertIndex++;
+    lastCaptionParagraph = body.insertParagraph(insertIndex, baseName);
+    insertIndex++;
 
-    // カーソル位置に画像をインラインで挿入（textElement の直前に配置される）
-    cursor.insertInlineImage(blob);
-
-    // 次の画像が直後に正しく並ぶよう、カーソル位置を更新
-    const nextPosition = doc.newPosition(textElement, textElement.getText().length);
-    doc.setCursor(nextPosition);
-    cursor = nextPosition;
-    
     insertCount++;
   }
-  
+
+  // 挿入した最後のキャプションの末尾にカーソルを移動し、続けて編集できるようにする
+  if (lastCaptionParagraph) {
+    doc.setCursor(doc.newPosition(lastCaptionParagraph, lastCaptionParagraph.getNumChildren()));
+  }
+
   return `正常に ${insertCount} 個の画像を挿入しました。`;
 }
