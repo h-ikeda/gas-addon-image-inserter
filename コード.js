@@ -30,26 +30,27 @@ function insertSelectedImages(filesData) {
   }
 
   // Google Docsが標準でサポートする主要なMIMEタイプ
+  // （BMP/TIFF/HEIC などはダイアログ側でPNGに変換済みのため、ここに到達するのは原則この3種）
   const supportedMimeTypes = [MimeType.PNG, MimeType.JPEG, MimeType.GIF];
   let insertCount = 0;
 
   // 受け取ったファイル配列をループ処理
   for (let i = 0; i < filesData.length; i++) {
     const file = filesData[i];
-    
+
     // Base64データをデコードしてBlobオブジェクトを作成
-    const contentType = file.type;
+    let contentType = file.type;
     const base64Data = file.data.split(',')[1];
     const decodedData = Utilities.base64Decode(base64Data);
     let blob = Utilities.newBlob(decodedData, contentType, file.name);
-    
-    // Docs非対応形式（BMPやTIFFなど）の場合、PNGに自動変換
+
+    // 万一Docs非対応形式が届いた場合は、Apps Scriptが変換可能なBMP等のみPNGへ変換を試みる
     if (!supportedMimeTypes.includes(contentType)) {
       try {
-        blob = blob.convertTo(MimeType.PNG);
+        blob = blob.getAs(MimeType.PNG);
+        contentType = MimeType.PNG;
       } catch (e) {
-        // 直接安全にコンバートできない特殊バイナリはMIMEタイプを上書き補正
-        blob.setContentType(MimeType.PNG);
+        throw new Error('「' + file.name + '」はサポートされていない画像形式です。PNG・JPEG・GIF のいずれかに変換してから挿入してください。');
       }
     }
 
