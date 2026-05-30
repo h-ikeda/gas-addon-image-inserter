@@ -1,7 +1,12 @@
-// ドキュメントが開かれたときにカスタムメニューを追加
-function onOpen() {
+// アドオンが初回インストールされたときに実行される必須処理
+function onInstall(e) {
+  onOpen(e);
+}
+
+// ドキュメントが開かれたときに「拡張機能」の中にメニューを追加する
+function onOpen(e) {
   DocumentApp.getUi()
-    .createMenu('画像挿入メニュー')
+    .createAddonMenu() // ★ createMenu から createAddonMenu に変更
     .addItem('画像を一括挿入', 'showImagePickerDialog')
     .addToUi();
 }
