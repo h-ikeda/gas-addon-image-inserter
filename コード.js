@@ -58,8 +58,7 @@ function insertSelectedImages(filesData) {
     const imageElement = cursor.insertInlineImage(blob);
     
     // 元のファイル名から拡張子を除いた名前を取得
-    const originalName = file.name;
-    const baseName = originalName.substring(0, originalName.lastIndexOf('.')) || originalName;
+    const baseName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
     
     // 画像の直後に改行とファイル名を挿入
     const textElement = cursor.insertText('\n' + baseName + '\n');

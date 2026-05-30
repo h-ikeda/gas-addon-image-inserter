@@ -45,8 +45,8 @@
         }
       }
 
-      // Google Docs がそのまま受け付ける形式
-      const SUPPORTED_TYPES = ['image/png', 'image/jpeg', 'image/gif'];
+      // Google Docs がそのまま受け付ける形式（'image/jpg' は非標準だが一部環境で報告される）
+      const SUPPORTED_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif'];
 
       // ファイルを Data URL として読み込む
       function readAsDataURL(file) {
@@ -90,7 +90,7 @@
         if (SUPPORTED_TYPES.includes(file.type)) {
           return { name: file.name, type: file.type, data: dataUrl };
         }
-        return await convertToPng(dataUrl, file.name);
+        return convertToPng(dataUrl, file.name);
       }
 
       async function uploadFiles() {
@@ -104,7 +104,7 @@
 
         let filesData;
         try {
-          filesData = await Promise.all(Array.prototype.map.call(input.files, processFile));
+          filesData = await Promise.all([...input.files].map(processFile));
         } catch (err) {
           status.innerText = 'エラー: ' + err.message;
           status.style.color = '#d93025';
@@ -115,6 +115,7 @@
         google.script.run
           .withSuccessHandler(function(msg) {
             status.innerText = msg;
+            btn.disabled = false;
             setTimeout(function() { google.script.host.close(); }, 1200);
           })
           .withFailureHandler(function(err) {
