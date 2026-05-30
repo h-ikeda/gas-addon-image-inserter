@@ -1,0 +1,34 @@
+name: Deploy to Google Apps Script
+
+on:
+  push:
+    branches:
+      - main  # mainブランチにpushされたら実行
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install clasp
+        run: npm install -g @google/clasp
+
+      - name: Create clasprc.json
+        run: |
+          echo '${{ secrets.CLASPRC_JSON }}' > ~/.clasprc.json
+
+      # 【新しく追加】CI実行時だけ、.clasp.jsonの中身を本物のスクリプトIDに置き換える
+      - name: Inject Script ID
+        run: |
+          sed -i 's/SCRIPT_ID_PLACEHOLDER/${{ secrets.GAS_SCRIPT_ID }}/g' .clasp.json
+
+      - name: Clasp Push
+        run: clasp push -f

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+      body { font-family: 'Helvetica Neue', Arial, sans-serif; padding: 15px; color: #333; font-size: 13px; }
+      .file-drop-area {
+        border: 2px dashed #1a73e8; border-radius: 6px; padding: 30px 15px;
+        text-align: center; background-color: #f8f9fa; cursor: pointer; margin-bottom: 15px;
+      }
+      .file-drop-area:hover { background-color: #f1f3f4; }
+      .btn-submit {
+        background-color: #1a73e8; color: white; border: none; padding: 10px 16px;
+        border-radius: 4px; cursor: pointer; font-weight: 500; width: 100%;
+      }
+      .btn-submit:disabled { background-color: #dadce0; cursor: not-allowed; }
+      #status { margin-top: 10px; color: #666; text-align: center; font-weight: bold; }
+    </style>
+  </head>
+  <body>
+    <div>
+      <p>ローカル、またはPCと同期しているGoogleドライブ等から画像を複数選択してください。</p>
+      
+      <div class="file-drop-area" onclick="document.getElementById('fileInput').click()">
+        <span>ここをクリックしてファイルを選択（複数可）</span>
+        <input type="file" id="fileInput" multiple accept="image/*" style="display:none" onchange="updateFileStatus()">
+      </div>
+      
+      <div id="status">ファイルが選択されていません</div>
+      <button id="submitBtn" class="btn-submit" onclick="uploadFiles()" disabled>ドキュメントに挿入する</button>
+    </div>
+
+    <script>
+      function updateFileStatus() {
+        const input = document.getElementById('fileInput');
+        const status = document.getElementById('status');
+        const btn = document.getElementById('submitBtn');
+        if (input.files.length > 0) {
+          status.innerText = input.files.length + ' 個のファイルが選択されています';
+          status.style.color = '#1a73e8';
+          btn.disabled = false;
+        } else {
+          status.innerText = 'ファイルが選択されていません';
+          btn.disabled = true;
+        }
+      }
+
+      function uploadFiles() {
+        const input = document.getElementById('fileInput');
+        const btn = document.getElementById('submitBtn');
+        const status = document.getElementById('status');
+        
+        btn.disabled = true;
+        status.innerText = '画像を最適化して処理中...';
+        
+        const filesData = [];
+        let loadedCount = 0;
+        
+        for (let i = 0; i < input.files.length; i++) {
+          const file = input.files[i];
+          const reader = new FileReader();
+          
+          reader.onload = function(e) {
+            filesData.push({
+              name: file.name,
+              type: file.type,
+              data: e.target.result
+            });
+            loadedCount++;
+            
+            if (loadedCount === input.files.length) {
+              google.script.run
+                .withSuccessHandler(function(msg) {
+                  status.innerText = msg;
+                  setTimeout(function() { google.script.host.close(); }, 1200);
+                })
+                .withFailureHandler(function(err) {
+                  status.innerText = 'エラー: ' + err.message;
+                  status.style.color = '#d93025';
+                  btn.disabled = false;
+                })
+                .insertSelectedImages(filesData);
+            }
+          };
+          reader.readAsDataURL(file);
+        }
+      }
+    </script>
+  </body>
+</html>
