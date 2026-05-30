@@ -54,17 +54,18 @@ function insertSelectedImages(filesData) {
       }
     }
 
-    // カーソル位置に画像をインラインで挿入
-    const imageElement = cursor.insertInlineImage(blob);
-    
     // 元のファイル名から拡張子を除いた名前を取得
     const baseName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
-    
-    // 画像の直後に改行とファイル名を挿入
+
+    // キャプションを先に挿入してからカーソル位置に画像を挿入する
+    // GAS の Position はイミュータブルなため、同じカーソルに対して2回挿入すると
+    // 後から挿入した要素が先に挿入した要素の「前」に入る性質を利用する
     const textElement = cursor.insertText('\n' + baseName + '\n');
-    
+
+    // カーソル位置に画像をインラインで挿入（textElement の直前に配置される）
+    cursor.insertInlineImage(blob);
+
     // 次の画像が直後に正しく並ぶよう、カーソル位置を更新
-    // doc.setCursor() は Document を返すため、Position を別途保持する
     const nextPosition = doc.newPosition(textElement, textElement.getText().length);
     doc.setCursor(nextPosition);
     cursor = nextPosition;
