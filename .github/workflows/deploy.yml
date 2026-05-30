@@ -32,3 +32,6 @@ jobs:
 
       - name: Clasp Push
         run: clasp push -f
+
+      - name: Clasp Deploy
+        run: clasp deploy -i ${{ secrets.GAS_DEPLOYMENT_ID }} -d "Auto deploy from GitHub Actions"
