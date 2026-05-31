@@ -42,16 +42,28 @@ describe('onInstall / onOpen', () => {
 });
 
 describe('showImagePickerDialog', () => {
-  test('Dialog からモーダルを生成し、サイズ・タイトルを設定して表示する', () => {
+  test('Dialog テンプレートを評価し、サイズ・タイトルを設定して表示する', () => {
     const { env, ctx } = load();
 
     ctx.showImagePickerDialog();
 
-    expect(env.globals.HtmlService.createHtmlOutputFromFile).toHaveBeenCalledWith('Dialog');
+    expect(env.globals.HtmlService.createTemplateFromFile).toHaveBeenCalledWith('Dialog');
+    expect(env.template.evaluate).toHaveBeenCalledTimes(1);
     expect(env.htmlOutput.setWidth).toHaveBeenCalledWith(450);
     expect(env.htmlOutput.setHeight).toHaveBeenCalledWith(300);
     expect(env.htmlOutput.setTitle).toHaveBeenCalledWith('挿入する画像ファイルの選択');
     expect(env.ui.showModalDialog).toHaveBeenCalledWith(env.htmlOutput, '画像の選択');
+  });
+});
+
+describe('include', () => {
+  test('指定した HTML ファイルの中身（getContent）を返す', () => {
+    const { env, ctx } = load();
+
+    const content = ctx.include('DialogJavaScript');
+
+    expect(env.globals.HtmlService.createHtmlOutputFromFile).toHaveBeenCalledWith('DialogJavaScript');
+    expect(content).toBe('<included-content>');
   });
 });
 

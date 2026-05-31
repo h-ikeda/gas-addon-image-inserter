@@ -11,9 +11,17 @@ function onOpen(e) {
     .addToUi();
 }
 
+// HTMLファイルの内容を別のHTMLテンプレートに取り込むためのヘルパー。
+// Dialog.html から <?!= include('DialogJavaScript') ?> として呼び出される。
+function include(filename) {
+  return HtmlService.createHtmlOutputFromFile(filename).getContent();
+}
+
 // ファイル選択ダイアログを表示する
 function showImagePickerDialog() {
-  const htmlOutput = HtmlService.createHtmlOutputFromFile('Dialog')
+  // テンプレートを評価して、外部ファイルのスクリプト（DialogJavaScript）を取り込む
+  const htmlOutput = HtmlService.createTemplateFromFile('Dialog')
+    .evaluate()
     .setWidth(450)
     .setHeight(300)
     .setTitle('挿入する画像ファイルの選択');
@@ -33,13 +41,7 @@ function insertSelectedImages(filesData) {
   // インラインで同一位置に挿し込むと、改行による段落分割でカーソルが陳腐化し、
   // 複数画像の並び順が崩れるため、本文の子要素として明示的にブロック挿入する。
   const body = doc.getBody();
-  let topLevelElement = cursor.getElement();
-  while (
-    topLevelElement.getParent() &&
-    topLevelElement.getParent().getType() !== DocumentApp.ElementType.BODY_SECTION
-  ) {
-    topLevelElement = topLevelElement.getParent();
-  }
+  const topLevelElement = findTopLevelElement(cursor.getElement(), DocumentApp.ElementType.BODY_SECTION);
   let insertIndex = body.getChildIndex(topLevelElement) + 1;
 
   // Google Docsが標準でサポートする主要なMIMEタイプ
@@ -54,12 +56,12 @@ function insertSelectedImages(filesData) {
 
     // Base64データをデコードしてBlobオブジェクトを作成
     let contentType = file.type;
-    const base64Data = file.data.split(',')[1];
+    const base64Data = extractBase64Data(file.data);
     const decodedData = Utilities.base64Decode(base64Data);
     let blob = Utilities.newBlob(decodedData, contentType, file.name);
 
     // 万一Docs非対応形式が届いた場合は、Apps Scriptが変換可能なBMP等のみPNGへ変換を試みる
-    if (!supportedMimeTypes.includes(contentType)) {
+    if (!isDocsSupportedImageType(contentType, supportedMimeTypes)) {
       try {
         blob = blob.getAs(MimeType.PNG);
         contentType = MimeType.PNG;
@@ -69,7 +71,7 @@ function insertSelectedImages(filesData) {
     }
 
     // 元のファイル名から拡張子を除いた名前を取得
-    const baseName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+    const baseName = getImageBaseName(file.name);
 
     // 画像を独立した段落として挿入し、その直下にキャプション段落を挿入する
     body.insertImage(insertIndex, blob);
