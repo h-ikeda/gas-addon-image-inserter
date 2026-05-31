@@ -2,9 +2,10 @@
 
 const { loadDialog } = require('./helpers/loadDialog');
 
-// 次のティックまで待つ（FileReader / Image のモックは setTimeout(...,0) で発火する）。
+// 保留中のタイマー（FileReader / Image のモックや成功ハンドラの close は
+// setTimeout(...,0) で発火する）を消化するまで待つ。
 function flush() {
-  return new Promise((resolve) => setImmediate(resolve));
+  return new Promise((resolve) => setTimeout(resolve, 0));
 }
 
 function makeFile(name, type, dataUrl, extra) {

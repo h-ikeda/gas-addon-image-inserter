@@ -157,16 +157,14 @@ describe('insertSelectedImages', () => {
   });
 
   test('カーソルがネストした要素にある場合は本文直下の要素まで遡って挿入位置を決める', () => {
-    const env = createGasEnv({ childIndex: 7 });
+    const { env, ctx } = load({ childIndex: 7 });
 
     // 本文セクション → 段落(本文直下) → インライン要素（カーソル位置）の階層を作る
-    const bodySection = env.bodySection;
-    const topParagraph = makeElement('PARAGRAPH', bodySection);
+    const topParagraph = makeElement('PARAGRAPH', env.bodySection);
     const inlineChild = makeElement('TEXT', topParagraph);
     // カーソルはインライン要素を指すよう差し替える
     env.cursor.getElement.mockReturnValue(inlineChild);
 
-    const ctx = loadGasScript(env.globals);
     ctx.insertSelectedImages([makeFile('x.png', 'image/png')]);
 
     // getChildIndex には本文直下の段落（topParagraph）が渡されるべき

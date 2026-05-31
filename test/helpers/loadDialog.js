@@ -4,13 +4,14 @@ const fs = require('fs');
 const path = require('path');
 const { JSDOM } = require('jsdom');
 
+// Dialog.html の内容は不変なので、モジュール読み込み時に一度だけ読み込んでキャッシュする。
+const htmlPath = path.resolve(__dirname, '..', '..', 'Dialog.html');
+const html = fs.readFileSync(htmlPath, 'utf8');
+
 // Dialog.html を jsdom で読み込み、インライン <script> を実行する。
 // ブラウザ依存 API（FileReader / Image / canvas / google.script.run）はソースを
 // 変更せずにテストするため、window 上のグローバルを差し替えて制御する。
 function loadDialog() {
-  const htmlPath = path.resolve(__dirname, '..', '..', 'Dialog.html');
-  const html = fs.readFileSync(htmlPath, 'utf8');
-
   const dom = new JSDOM(html, { runScripts: 'dangerously' });
   const win = dom.window;
 
@@ -97,11 +98,10 @@ function loadDialog() {
   // host.close を検証できるよう監視する。
   win.google.script.host.close = jestCloseSpy();
 
-  // 成功ハンドラ内の setTimeout(close, 1200) を即時実行して検証可能にする。
-  win.setTimeout = (fn) => {
-    fn();
-    return 0;
-  };
+  // 成功ハンドラ内の setTimeout(close, 1200) は遅延だけスキップし、非同期の実行順序は
+  // 保ったまま検証できるよう、Node の setTimeout(fn, 0) に委譲する。
+  // テスト側は flush()（setImmediate 待ち）で完了を待てる。
+  win.setTimeout = (fn) => setTimeout(fn, 0);
 
   // input.files をテストから差し替えるためのユーティリティ。
   function setFiles(files) {
