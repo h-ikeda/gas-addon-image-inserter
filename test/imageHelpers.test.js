@@ -11,6 +11,12 @@ describe('extractBase64Data', () => {
   test('Data URL から Base64 本体だけを取り出す', () => {
     expect(ctx.extractBase64Data('data:image/png;base64,ABCD')).toBe('ABCD');
   });
+
+  test('null / カンマを含まない不正な入力は空文字を返す', () => {
+    expect(ctx.extractBase64Data(null)).toBe('');
+    expect(ctx.extractBase64Data('')).toBe('');
+    expect(ctx.extractBase64Data('not-a-data-url')).toBe('');
+  });
 });
 
 describe('getImageBaseName', () => {
@@ -24,6 +30,15 @@ describe('getImageBaseName', () => {
 
   test('拡張子が無ければ元の名前を返す', () => {
     expect(ctx.getImageBaseName('noext')).toBe('noext');
+  });
+
+  test('先頭がドットのファイル名は元の名前を返す', () => {
+    expect(ctx.getImageBaseName('.gitignore')).toBe('.gitignore');
+  });
+
+  test('null / 空文字は空文字を返す', () => {
+    expect(ctx.getImageBaseName(null)).toBe('');
+    expect(ctx.getImageBaseName('')).toBe('');
   });
 });
 
@@ -59,5 +74,9 @@ describe('findTopLevelElement', () => {
     const orphan = makeElement('PARAGRAPH', null);
 
     expect(ctx.findTopLevelElement(orphan, 'BODY_SECTION')).toBe(orphan);
+  });
+
+  test('要素が null の場合は null を返す', () => {
+    expect(ctx.findTopLevelElement(null, 'BODY_SECTION')).toBeNull();
   });
 });

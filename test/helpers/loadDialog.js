@@ -26,6 +26,7 @@ function loadDialog() {
   // テストから挙動を制御するための設定。
   const config = {
     imageFails: false, // convertToPng で画像読込が失敗するか
+    canvasContextNull: false, // getContext('2d') が null を返すか
     pngDataUrl: 'data:image/png;base64,PNGDATA',
     onInsert: null, // insertSelectedImages 呼び出し時のフック
   };
@@ -71,7 +72,7 @@ function loadDialog() {
       return {
         width: 0,
         height: 0,
-        getContext: () => ({ drawImage: () => {} }),
+        getContext: () => (config.canvasContextNull ? null : { drawImage: () => {} }),
         toDataURL: () => config.pngDataUrl,
       };
     }

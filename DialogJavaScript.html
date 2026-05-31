@@ -36,6 +36,10 @@
           canvas.width = img.naturalWidth;
           canvas.height = img.naturalHeight;
           const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('「' + name + '」の変換に失敗しました（2Dコンテキストの取得に失敗しました）。'));
+            return;
+          }
           ctx.drawImage(img, 0, 0);
           const pngData = canvas.toDataURL('image/png');
           const baseName = name.replace(/\.[^.]+$/, '');
