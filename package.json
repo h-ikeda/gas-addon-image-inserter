@@ -1,0 +1,19 @@
+{
+  "name": "gas-addon-image-inserter",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Google Docs アドオン: 画像を一括挿入する",
+  "scripts": {
+    "test": "jest"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": [
+      "<rootDir>/test/**/*.test.js"
+    ]
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "jsdom": "^25.0.1"
+  }
+}
