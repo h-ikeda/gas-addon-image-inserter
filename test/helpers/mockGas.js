@@ -100,13 +100,20 @@ function createGasEnv(options) {
     getUi: jest.fn(() => ui),
   };
 
-  // HtmlService（showImagePickerDialog 用）。setter はチェーンのため自身を返す。
+  // HtmlService（showImagePickerDialog / include 用）。setter はチェーンのため自身を返す。
   const htmlOutput = {
     setWidth: jest.fn(() => htmlOutput),
     setHeight: jest.fn(() => htmlOutput),
     setTitle: jest.fn(() => htmlOutput),
+    // include() が呼ぶ getContent（取り込まれる HTML の中身）
+    getContent: jest.fn(() => '<included-content>'),
+  };
+  // createTemplateFromFile('Dialog').evaluate() で htmlOutput を返すテンプレート
+  const template = {
+    evaluate: jest.fn(() => htmlOutput),
   };
   const HtmlService = {
+    createTemplateFromFile: jest.fn(() => template),
     createHtmlOutputFromFile: jest.fn(() => htmlOutput),
   };
 
@@ -137,6 +144,7 @@ function createGasEnv(options) {
     ui,
     menu,
     htmlOutput,
+    template,
     bodySection,
     defaultParagraph,
     cursorElement,

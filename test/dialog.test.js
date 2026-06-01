@@ -78,6 +78,16 @@ describe('processFile', () => {
 
     await expect(window.processFile(file)).rejects.toThrow('「broken.png」の読み込みに失敗しました。');
   });
+
+  test('2Dコンテキストが取得できない場合は変換エラーになる', async () => {
+    const { window, config } = loadDialog();
+    config.canvasContextNull = true;
+    const file = makeFile('drawing.bmp', 'image/bmp', 'data:image/bmp;base64,BBBB');
+
+    await expect(window.processFile(file)).rejects.toThrow(
+      '「drawing.bmp」の変換に失敗しました（2Dコンテキストの取得に失敗しました）。'
+    );
+  });
 });
 
 describe('uploadFiles', () => {

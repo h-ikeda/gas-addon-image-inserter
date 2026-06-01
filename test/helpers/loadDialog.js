@@ -4,11 +4,19 @@ const fs = require('fs');
 const path = require('path');
 const { JSDOM } = require('jsdom');
 
-// Dialog.html の内容は不変なので、モジュール読み込み時に一度だけ読み込んでキャッシュする。
-const htmlPath = path.resolve(__dirname, '..', '..', 'Dialog.html');
-const html = fs.readFileSync(htmlPath, 'utf8');
+const projectRoot = path.resolve(__dirname, '..', '..');
 
-// Dialog.html を jsdom で読み込み、インライン <script> を実行する。
+// GAS のテンプレート展開を再現する。Dialog.html 内の <?!= include('X') ?> を
+// X.html の中身に置き換え、本番でブラウザに配信されるのと同じHTMLを組み立てる。
+// 内容は不変なので、モジュール読み込み時に一度だけ解決してキャッシュする。
+function resolveIncludes(html) {
+  return html.replace(/<\?!=\s*include\('([^']+)'\)\s*\?>/g, (_, name) =>
+    fs.readFileSync(path.join(projectRoot, name + '.html'), 'utf8')
+  );
+}
+const html = resolveIncludes(fs.readFileSync(path.join(projectRoot, 'Dialog.html'), 'utf8'));
+
+// Dialog.html を jsdom で読み込み、取り込んだ <script> を実行する。
 // ブラウザ依存 API（FileReader / Image / canvas / google.script.run）はソースを
 // 変更せずにテストするため、window 上のグローバルを差し替えて制御する。
 function loadDialog() {
@@ -18,6 +26,7 @@ function loadDialog() {
   // テストから挙動を制御するための設定。
   const config = {
     imageFails: false, // convertToPng で画像読込が失敗するか
+    canvasContextNull: false, // getContext('2d') が null を返すか
     pngDataUrl: 'data:image/png;base64,PNGDATA',
     onInsert: null, // insertSelectedImages 呼び出し時のフック
   };
@@ -63,7 +72,7 @@ function loadDialog() {
       return {
         width: 0,
         height: 0,
-        getContext: () => ({ drawImage: () => {} }),
+        getContext: () => (config.canvasContextNull ? null : { drawImage: () => {} }),
         toDataURL: () => config.pngDataUrl,
       };
     }
